@@ -1,5 +1,5 @@
 {
-  "name": "generalcavi/gnc-bb-tools-module",
+  "name": "fabiopellati/bb-tools-module",
   "description": "elementi di view per l'implementazione del bbtools",
   "minimum-stability": "stable",
   "license": "proprietary",
