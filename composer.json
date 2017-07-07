@@ -1,0 +1,32 @@
+{
+  "name": "generalcavi/gnc-bb-tools-module",
+  "description": "elementi di view per l'implementazione del bbtools",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Fabio Pellati",
+      "email": "fabio.pellati@gmail.com"
+    }
+  ],
+  "require": {
+    "rwoverdijk/assetmanager": "^1.7"
+
+  },
+  "autoload": {
+    "psr-4": {
+      "Gnc\\BbToolsModule\\": "src/"
+    }
+  },
+  "scripts": {
+
+  },
+  "extra": {
+    "zf": {
+      "component": [
+        "Gnc\\BbToolsModule",
+        "AssetManager"
+      ]
+    }
+  }
+}
