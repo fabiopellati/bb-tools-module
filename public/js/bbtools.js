@@ -12,9 +12,14 @@ var Collection = Backbone.Collection.extend({
     initialize: function (options) {
         this.bind('add', function (model) {
             model.bind('select', this.onSelectModel, this);
-            model.bind('unselect', this.onUnSelectModel, this)
+            model.bind('unselect', this.onUnSelectModel, this);
         }, this);
+        // this.model.on('error', this.onModelError, this);
     },
+
+    // onModelError:function(model, response, options){
+    //     this.trigger('error',{"model":model, "response":response, "options":options});
+    // },
 
     delete_selected: function () {
         if (this._selected.length == 0) {
@@ -212,7 +217,7 @@ module.exports = ApigilityModel;
 },{"./Model":4}],4:[function(require,module,exports){
 'use strict';
 
-var ApigilityModel = Backbone.Model.extend({
+var Model = Backbone.Model.extend({
     initialize: function (options) {
         this.bind('select', this.onSelect, this);
         this.bind('unselect', this.onUnSelect, this);
@@ -256,7 +261,7 @@ var ApigilityModel = Backbone.Model.extend({
         return this.id;
     }
 });
-module.exports = ApigilityModel;
+module.exports = Model;
 },{}],5:[function(require,module,exports){
 'use strict';
 var template = require('./template/responsive.html');

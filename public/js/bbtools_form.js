@@ -877,6 +877,7 @@ var Router = Backbone.Router.extend({
      * @param e
      */
     onModelError: function (model, e) {
+        console.log(e);
         if (e.status == 422) {
             if (_.has(e.responseJSON.validation_messages, this.key)) {
                 var messages = _.propertyOf(e.responseJSON.validation_messages)(this.key);

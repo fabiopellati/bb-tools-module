@@ -34,6 +34,8 @@ CrudGridRouter = Backbone.Router.extend({
         }
 
         this.collection.on('request', this.onRequest, this);
+        this.collection.on('error', this.onModelError, this);
+
 
     },
     routes: {
@@ -53,6 +55,33 @@ CrudGridRouter = Backbone.Router.extend({
             App.unblockUI();
         });
         App.blockUI();
+    },
+
+    /**
+     * listener dell'evento model change:[attribute]
+     * @param response
+     */
+    onModelError: function (model, response, options) {
+        console.log(model);
+        console.log(response);
+        console.log(options);
+        return;
+        if (response.status == 422) {
+            if (_.has(response.responseJSON.validation_messages, this.key)) {
+                var messages = _.propertyOf(response.responseJSON.validation_messages)(this.key);
+                this.trigger('editor.model.error', {'messages': messages});
+            }
+        }
+        App.unblockUI();
+        var message = "<h4>"+ response.statusText +"</h4>";
+        message = message + "<h5>" + response.responseText + "</h5>";
+        var modal_options = {
+            buttons: ['ok'],
+            message: message
+        };
+        var modal = new BbTools.View.Modal.Responsive(modal_options);
+        modal.show();
+
     },
 
     /**
@@ -1094,12 +1123,15 @@ var SearchView = Backbone.View.extend({
      * @param e
      */
     search: function (e) {
-        if (e.key.length != 1
-            && e.keyCode != 8
-            && e.keyCode != 46
-        ) {
+        if (e.keyCode != 13) {
             return;
         }
+        // if (e.key.length != 1
+        //     && e.keyCode != 8
+        //     && e.keyCode != 46
+        // ) {
+        //     return;
+        // }
         var data = {
             search: e.currentTarget.value,
             search_into: this.search_columns
