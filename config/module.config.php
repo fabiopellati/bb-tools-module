@@ -1,6 +1,6 @@
 <?php
 
-namespace Gnc\BbToolsModule;
+namespace BbToolsModule;
 
 return [
     'asset_manager'=>[

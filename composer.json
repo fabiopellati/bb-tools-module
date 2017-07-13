@@ -15,7 +15,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Gnc\\BbToolsModule\\": "src/"
+      "BbToolsModule\\": "src/"
     }
   },
   "scripts": {
@@ -24,7 +24,7 @@
   "extra": {
     "zf": {
       "component": [
-        "Gnc\\BbToolsModule",
+        "BbToolsModule",
         "AssetManager"
       ]
     }

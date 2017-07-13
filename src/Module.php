@@ -5,7 +5,7 @@
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-namespace Gnc\BbToolsModule;
+namespace BbToolsModule;
 
 use Zend\Mvc\MvcEvent;
 use Zend\View\Model\ViewModel;
