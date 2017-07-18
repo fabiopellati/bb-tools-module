@@ -62,10 +62,10 @@ CrudGridRouter = Backbone.Router.extend({
      * @param response
      */
     onModelError: function (model, response, options) {
-        console.log(model);
-        console.log(response);
-        console.log(options);
-        return;
+        // console.log(model);
+        // console.log(response);
+        // console.log(options);
+        // return;
         if (response.status == 422) {
             if (_.has(response.responseJSON.validation_messages, this.key)) {
                 var messages = _.propertyOf(response.responseJSON.validation_messages)(this.key);
@@ -484,12 +484,12 @@ var BodyRowView = Backbone.View.extend({
 
         selectRow: function (id) {
             this.$el.addClass('selected');
-            this.model.trigger('select', {id: id});
+            this.model.trigger('select', {id: this.model.getIdentifier()});
 
         },
         unSelectRow: function (id) {
             this.$el.removeClass('selected');
-            this.model.trigger('unselect', {id: id});
+            this.model.trigger('unselect', {id:  this.model.getIdentifier()});
 
         },
         /**
