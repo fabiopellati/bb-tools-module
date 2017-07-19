@@ -214,7 +214,43 @@ var ApigilityModel = Model.extend({
 
 });
 module.exports = ApigilityModel;
-},{"./Model":4}],4:[function(require,module,exports){
+},{"./Model":5}],4:[function(require,module,exports){
+'use strict';
+
+var EnvironmentModel = Backbone.Model.extend({
+
+    bindModels: [],
+
+    initialize: function () {
+        this.on('change', this.onChange, this);
+    },
+
+    /**
+     *
+     * @param m
+     * @param options
+     */
+    onChange: function (m, options) {
+        var that=this;
+        _.mapObject(m.changed, function (value, key) {
+
+            that.bindModels.map(function (bindModel) {
+                bindModel.set(key, value);
+            });
+        })
+    },
+
+    /**
+     *
+     * @param model
+     */
+    bindModel: function (model) {
+        this.bindModels.push(model);
+    }
+
+});
+module.exports = EnvironmentModel;
+},{}],5:[function(require,module,exports){
 'use strict';
 
 var Model = Backbone.Model.extend({
@@ -262,7 +298,7 @@ var Model = Backbone.Model.extend({
     }
 });
 module.exports = Model;
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 var template = require('./template/responsive.html');
 
@@ -368,10 +404,10 @@ var Responsive = Backbone.View.extend({
 
 });
 module.exports = Responsive;
-},{"./template/responsive.html":6}],6:[function(require,module,exports){
+},{"./template/responsive.html":7}],7:[function(require,module,exports){
 module.exports = "<div id=\"<%- id %>\" class=\"modal responsive fade\" tabindex=\"-1\" aria-hidden=\"true\">\n    <div class=\"modal-dialog\">\n        <div class=\"modal-content\">\n            <div class=\"modal-header\">\n                <button type=\"button\" class=\"close\" data-dismiss=\"modal\"\n                        aria-hidden=\"true\"></button>\n                <h4 class=\"modal-title\"><%- title %></h4>\n            </div>\n            <div class=\"modal-body\">\n                <div class=\"scroller\" style=\"height:200px\" data-always-visible=\"1\" data-rail-visible1=\"1\">\n                    <div class=\"row\">\n                        <div class=\"col-md-12\">\n                            <%= message %>\n                        </div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"modal-footer\">\n                <% _.each(buttons, function(button) { %>\n                    <% if(button==\"yes\"){%>\n                             <button type=\"button\" class=\"btn green\" id=\"button-yes\"\n                                     style=\"padding-left: 20px;padding-right: 20px;\">Si\n                             </button>\n                    <% }%>\n                    <% if(button==\"no\"){%>\n                             <button type=\"button\" class=\"btn blue\" id=\"button-no\"\n                                     style=\"padding-left: 20px;padding-right: 20px;\">No</button>\n                    <% }%>\n                    <% if(button==\"ok\"){%>\n                             <button type=\"button\" class=\"btn green\" id=\"button-ok\"\n                                     style=\"padding-left: 20px;padding-right: 20px;\">Ok</button>\n                    <% }%>\n                    <% if(button==\"cancel\"){%>\n                             <button type=\"button\" class=\"btn green\" id=\"button-cance\">Cancel</button>\n                    <% }%>\n                    <% if(button==\"chiudi\"){%>\n                <button type=\"button\" data-dismiss=\"modal\" class=\"btn dark btn-outline\">Chiudi</button>\n                    <% }%>\n                \n                <% }) %>\n            </div>\n        </div>\n    </div>\n</div>\n";
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -406,6 +442,7 @@ module.exports = "<div id=\"<%- id %>\" class=\"modal responsive fade\" tabindex
     // BbTools.Risorsa = require('./Model/Risorsa');
     BbTools.Model = require('./Model/Model');
     BbTools.ApigilityModel = require('./Model/ApigilityModel');
+    BbTools.EnvironmentModel = require('./Model/EnvinonmentModel');
     BbTools.View = {};
     BbTools.View.Modal = {};
     BbTools.View.Modal.Responsive = require('./View/Modal/Responsive');
@@ -420,4 +457,4 @@ module.exports = "<div id=\"<%- id %>\" class=\"modal responsive fade\" tabindex
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Collection/Collection":1,"./Debug":2,"./Model/ApigilityModel":3,"./Model/Model":4,"./View/Modal/Responsive":5}]},{},[7]);
+},{"./Collection/Collection":1,"./Debug":2,"./Model/ApigilityModel":3,"./Model/EnvinonmentModel":4,"./Model/Model":5,"./View/Modal/Responsive":6}]},{},[8]);

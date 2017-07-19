@@ -12,18 +12,18 @@
  * - gestisce lo stato delle validazioni inoltrate dal Restful
  *
  * comportamento di default:
- * l'editor presuppone l'esistenza di un elemento con classe .data_editor che esponga la proprietà "value" e possa
+ * l'editor presuppone l'esistenza di un elemento con classe .data-editor che esponga la proprietà "value" e possa
  * lanciare un evento change
  *
- * sull'evento change di .data_editor aggiorna il valore di value ed esegue this.validate; se vengono violate regole
+ * sull'evento change di .data-editor aggiorna il valore di value ed esegue this.validate; se vengono violate regole
  * di validazione viene anciato l'evento editor.value.invalid
  *
  */
 var FormFieldEditorView;
 FormFieldEditorView = Backbone.View.extend({
     events: {
-        'change .data_editor': 'onChange',
-        'keyup .data_editor': 'onKeyUp',
+        'change .data-editor': 'onChange',
+        'keyup .data-editor': 'onKeyUp',
     },
     attributes: {},
     view_attributes: {},
@@ -45,6 +45,7 @@ FormFieldEditorView = Backbone.View.extend({
             this.key = options.key;
             this.model.bind('change:' + this.key, this.onModelChange, this);
         }
+        this.name = (typeof options.name != 'undefined')? options.name : this.key;
 
         this.listenTo(this.model, 'error', this.onModelError, this);
 
@@ -271,10 +272,11 @@ var ButtonEditorView = BaseView.extend({
         onEditorRender: function (e) {
             // console.log({'onEditorRender':e});
             var data = {
+                name: this.name,
                 key: this.key,
                 title: this.title, label: this.label,
                 help: this.help,
-                editorId: this.key + this.model.cid,
+                editorId: this.name + this.model.cid,
                 attributes: this.view_attributes
             };
 
@@ -297,6 +299,36 @@ module.exports = ButtonEditorView;
 var FormFieldEditorView = require('./TextEditorView');
 
 var DateTextEditorView = FormFieldEditorView.extend({
+    /**
+     *
+     * @param options
+     */
+    initialize: function (options) {
+        FormFieldEditorView.prototype.initialize.call(this, options);
+        if (typeof options.write_pattern != 'undefined') {
+            this.write_pattern =  options.write_pattern;
+        } else {
+            this.write_pattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+        }
+        if (typeof options.write_replace != 'undefined') {
+            this.write_replace =  options.write_replace;
+        } else {
+            this.write_replace = '$3-$2-$1';
+        }
+
+        if (typeof options.read_pattern != 'undefined') {
+            this.read_pattern =  options.read_pattern;
+        } else {
+            this.read_pattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+        }
+        if (typeof options.read_replace != 'undefined') {
+            this.read_replace =  options.read_replace;
+        } else {
+            this.read_replace = '$1/$2/$3';
+        }
+
+
+    },
 
     /**
      *
@@ -314,10 +346,10 @@ var DateTextEditorView = FormFieldEditorView.extend({
      * @returns {*}
      */
     filterForWrite: function (value) {
-        var pattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+        var pattern =this.write_pattern;
         if (_.isString(value)) {
             if (pattern.test(value)) {
-                var replaced = value.replace(pattern, '$3-$2-$1');
+                var replaced = value.replace(pattern, this.write_replace);
                 return replaced;
             }
         }
@@ -331,9 +363,9 @@ var DateTextEditorView = FormFieldEditorView.extend({
      * @returns {*}
      */
     filterForRead: function (value) {
-        var pattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+        var pattern =this.read_pattern;
         if (_.isString(value) && pattern.test(value)) {
-            var replaced = value.replace(pattern, '$3/$2/$1');
+            var replaced = value.replace(pattern, this.read_replace);
             return replaced;
         }
         return value;
@@ -348,335 +380,13 @@ var DateTextEditorView = FormFieldEditorView.extend({
         this.$el.removeClass('has-error');
         this.$el.find('.help-block.data-error').empty();
         var value = this.filterForRead(e.value);
+        this.writeValue(value)
 
-        this.$('.data_editor').val(value);
     }
 
 });
 module.exports = DateTextEditorView;
-},{"./TextEditorView":7}],5:[function(require,module,exports){
-'use strict';
-
-
-/**
- * specs:
- *
- */
-var BaseView = require('../../FormFieldEditorView');
-
-/**
- * genera una select con le options statiche
- *
- */
-var SelectEditorView = BaseView.extend({
-    tagName: 'div',
-    template: _.template('\
-      <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
-      <div class="<%= attributes.field_class %>">\
-        <select class="<%= attributes.form_control_class %> form-control data_editor" id="<%= editorId %>">\
-         <% for(i=0;i < options.length;i++){ %>\
-         <% var option=options[i]; %>\
-         <option value="<%= option.value %>"><%= option.option %></option>\
-         <% }%>\
-        </select>\
-        <p class="<%= attributes.data_error_class %> help-block data-error"></p>\
-        <p class="<%= attributes.help_block_class %>help-block"><%= help %></p>\
-      </div>\
-    '),
-    options: [],
-    label: 'label',
-    initialize: function (options) {
-        BaseView.prototype.initialize.call(this, options);
-        if (typeof options.key != 'undefined') {
-            this.key = options.key;
-        } else {
-            throw new Error("editor bootstrap/SelectEditorView option obbligatoria non definita: 'key' equivalente all'attrib nel model")
-        }
-        this.title = (typeof options.title != 'undefined') ? options.title : this.key;
-
-        if (typeof options.label != 'undefined') {
-            this.label = options.label;
-        }
-        this.initAttributes(options);
-        this.bind('editor.render', this.onEditorRender, this);
-        this.bind('editor.event', this.onEditorEvent, this);
-        this.bind('editor.model.error', this.onEditorModelError, this);
-        this.bind('editor.set.value', this.onEditorSetValue, this);
-        this.model.bind('model.commit.success', this.onEditorModelSuccess, this);
-        this.setSelectOptions(options);
-    },
-
-    /**
-     * inizializza gli attributes dell'editor
-     * @param options
-     */
-    initAttributes: function (options) {
-        this.attributes = (typeof options.attributes != 'undefined') ? options.attributes : this.attributes;
-        if (_.has(this.attributes, 'class')) {
-            if (!/(form-group)/.test(this.attributes.class)) {
-                this.attributes.class = 'form-group ' + this.attributes.class;
-            }
-        } else {
-            _.extend(this.attributes, {class: 'form-group'});
-        }
-        _.extend(this.attributes, {"data-field": this.key});
-
-    },
-
-    /**
-     *
-     * @param options
-     */
-    setSelectOptions: function (options) {
-        if (typeof options.options == 'undefined') {
-            return;
-        }
-        this.options.push({value: '', option: '---'});
-        _.each(options.options, function (option) {
-            if (typeof option == 'string') {
-                this.options.push({value: option, option: option});
-            } else if (typeof option == 'object') {
-                this.options.push({value: option.value, option: option.option});
-            }
-        }, this);
-        this.render(this.cid);
-
-    },
-
-    /**
-     * listener dell'evento editor.render
-     *
-     * @param e
-     */
-    onEditorRender: function (e) {
-        var data = {
-            key: this.key,
-            title: this.title, label: this.label,
-            help: this.help,
-            editorId: this.key + this.model.cid,
-            attributes: this.view_attributes,
-            options: this.options
-        };
-        this.$el.attr(this.attributes);
-        this.$el.html(this.template(data));
-        this.setValue(this.model.get(this.key));
-    },
-
-    /**
-     * listener dell'evento editor.set.value
-     *
-     * @param e
-     */
-    onEditorSetValue: function (e) {
-        this.$el.removeClass('has-error');
-        this.$('.help-block.data-error').empty();
-
-        this.$el.find("option[value='" + e.value + "']").attr('selected', 'selected');
-    },
-
-    /**
-     * sul commit del model si sono verificati errori ed il model ha emesso il relativo evento
-     *
-     * @param e
-     */
-    onEditorModelError: function (e) {
-        this.$el.addClass('has-error');
-        this.$('.help-block .data-error').empty();
-
-        _.mapObject(e.messages, function (val, key) {
-            var message = document.createElement('div');
-            var text = document.createTextNode(val);
-            message.appendChild(text);
-            this.$('.help-block.data-error').append(message);
-        }, this);
-
-    },
-
-    /**
-     * commit del model avvenuto con successo
-     *
-     * @param e
-     */
-    onEditorModelSuccess: function (e) {
-        this.$el.removeClass('has-error');
-        this.$el.addClass('has-success');
-
-    }
-});
-module.exports = SelectEditorView;
-},{"../../FormFieldEditorView":1}],6:[function(require,module,exports){
-'use strict';
-
-
-/**
- * specs:
- *
- */
-var BaseView = require('../../FormFieldEditorView');
-
-/**
- * genera una select con le options basate su una collection
- *
- */
-var SelectModelEditorView = BaseView.extend({
-    tagName: 'div',
-    template: _.template('\
-      <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
-      <div class="<%= attributes.field_class %>">\
-        <select class="<%= attributes.form_control_class %> form-control data_editor" id="<%= editorId %>">\
-         <% for(i=0;i < options.length;i++){ %>\
-         <% var option=options[i]; %>\
-         <option value="<%= option.value %>"><%= option.option %></option>\
-         <% }%>\
-        </select>\
-        <p class="<%= attributes.data_error_class %> help-block data-error"></p>\
-        <p class="<%= attributes.help_block_class %>help-block"><%= help %></p>\
-      </div>\
-    '),
-    options: [],
-    label: 'label',
-    initialize: function (options) {
-        BaseView.prototype.initialize.call(this, options);
-        if (typeof options.key != 'undefined') {
-            this.key = options.key;
-        } else {
-            throw new Error("editor bootstrap/SelectModelEditorView option obbligatoria non definita: 'key' equivalente all'attrib nel model")
-        }
-        if (!options.collection.prototype instanceof Backbone.Collection) {
-            throw new Error("editor bootstrap/SelectModelEditorView option deve essere un model");
-            return;
-        }
-        this.title = (typeof options.title != 'undefined') ? options.title : this.key;
-
-        if (typeof options.label != 'undefined') {
-            this.label = options.label;
-        }
-        this.initAttributes(options);
-
-        this.key_value = options.key_value;
-        this.key_option = options.key_option;
-        this.collection.bind('sync', this.setSelectOptions, this);
-        this.bind('editor.render', this.onEditorRender, this);
-        this.bind('editor.event', this.onEditorEvent, this);
-        this.bind('editor.model.error', this.onEditorModelError, this);
-        this.bind('editor.set.value', this.onEditorSetValue, this);
-        this.model.bind('model.commit.success', this.onEditorModelSuccess, this);
-
-        var fetch_data = (typeof options.fetch_data != 'undefined') ? options.fetch_data : {};
-        this.collection.fetch({data: fetch_data});
-    },
-
-    /**
-     * inizializza gli attributes dell'editor
-     * @param options
-     */
-    initAttributes: function (options) {
-        this.attributes = (typeof options.attributes != 'undefined') ? options.attributes : this.attributes;
-        if (_.has(this.attributes, 'class')) {
-            if (!/(form-group)/.test(this.attributes.class)) {
-                this.attributes.class = 'form-group ' + this.attributes.class;
-            }
-        } else {
-            _.extend(this.attributes, {class: 'form-group'});
-        }
-        _.extend(this.attributes, {"data-field": this.key});
-
-    },
-
-    /**
-     *
-     * @param options
-     */
-    setSelectOptions: function (options) {
-        // _.each(this.options, function (row) {
-        //     row.remove();
-        // }, this);
-        this.options = [];
-        this.options.push({value: '', option: '---'});
-        _.each(this.collection.models, function (model) {
-            var option_value = model.get(this.key_value);
-            if (typeof this.key_option == 'string') {
-                var option_option = model.get(this.key_option);
-            } else if (typeof this.key_option == 'object') {
-                var option_option = this.key_option.reduce(function (prev, curr) {
-                    var a = model.get(prev);
-                    var b = model.get(curr);
-                    return a + ' ' + b;
-                });
-            } else if (typeof this.key_option == 'function') {
-                var option_option = this.key_option(model);
-            }
-            this.options.push({value: option_value, option: option_option,});
-
-        }, this);
-        this.render(this.cid);
-
-    },
-
-    /**
-     * listener dell'evento editor.render
-     *
-     * @param e
-     */
-    onEditorRender: function (e) {
-        // console.log({'onEditorRender':e});
-        var data = {
-            key: this.key,
-            title: this.title, label: this.label,
-            help: this.help,
-            editorId: this.key + this.model.cid,
-            attributes: this.view_attributes,
-            options: this.options
-        };
-
-        this.$el.attr(this.attributes);
-        this.$el.html(this.template(data));
-        this.setValue(this.model.get(this.key));
-    },
-
-    /**
-     * listener dell'evento editor.set.value
-     *
-     * @param e
-     */
-    onEditorSetValue: function (e) {
-        this.$el.removeClass('has-error');
-        this.$('.help-block.data-error').empty();
-
-        this.$el.find("option[value='" + e.value + "']").attr('selected', 'selected');
-    },
-    /**
-     * sul commit del model si sono verificati errori ed il model ha emesso il relativo evento
-     *
-     * @param e
-     */
-    onEditorModelError: function (e) {
-        this.$el.addClass('has-error');
-        this.$('.help-block .data-error').empty();
-
-        _.mapObject(e.messages, function (val, key) {
-            var message = document.createElement('div');
-            var text = document.createTextNode(val);
-            message.appendChild(text);
-            this.$('.help-block.data-error').append(message);
-        }, this);
-
-    },
-
-    /**
-     * commit del model avvenuto con successo
-     *
-     * @param e
-     */
-    onEditorModelSuccess: function (e) {
-        this.$el.removeClass('has-error');
-        this.$el.addClass('has-success');
-
-    },
-
-});
-module.exports = SelectModelEditorView;
-},{"../../FormFieldEditorView":1}],7:[function(require,module,exports){
+},{"./TextEditorView":8}],5:[function(require,module,exports){
 'use strict';
 
 
@@ -691,11 +401,12 @@ var TextEditorView = FormFieldEditorView.extend({
     template: _.template('\
       <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
       <div class="<%= attributes.field_class %>">\
-        <input class="<%= attributes.form_control_class %> form-control data_editor" id="<%= editorId %>">\
+        <div class="<%= attributes.form_control_class %> form-control data-editor " id="<%= editorId %>" readonly></div>\
         <p class="<%= attributes.data_error_class %> help-block data-error"></p>\
         <p class="<%= attributes.help_block_class %>help-block"><%= help %></p>\
       </div>\
     '),
+
 
     view_attributes: {
         label_class: 'col-md-3',
@@ -781,10 +492,11 @@ var TextEditorView = FormFieldEditorView.extend({
      */
     onEditorRender: function (e) {
         var data = {
+            name: this.name,
             key: this.key,
             title: this.title,
             help: this.help,
-            editorId: this.key + this.model.cid,
+            editorId: this.name + this.model.cid,
             attributes: this.view_attributes
         };
         this.$el.attr(this.attributes);
@@ -800,7 +512,7 @@ var TextEditorView = FormFieldEditorView.extend({
     onEditorSetValue: function (e) {
         this.$el.removeClass('has-error');
         this.$el.find('.help-block.data-error').empty();
-        this.$('.data_editor').val(e.value);
+        this.writeValue(e.value)
     },
 
     /**
@@ -816,7 +528,499 @@ var TextEditorView = FormFieldEditorView.extend({
 
 });
 module.exports = TextEditorView;
+},{"../../FormFieldEditorView":1}],6:[function(require,module,exports){
+'use strict';
+
+
+/**
+ * specs:
+ *
+ */
+var BaseView = require('../../FormFieldEditorView');
+
+/**
+ * genera una select con le options statiche
+ *
+ */
+var SelectEditorView = BaseView.extend({
+    tagName: 'div',
+    template: _.template('\
+      <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
+      <div class="<%= attributes.field_class %>">\
+        <select class="<%= attributes.form_control_class %> form-control data-editor" id="<%= editorId %>" <%=\
+         disabled%> >\
+         <% for(i=0;i < options.length;i++){ %>\
+         <% var option=options[i]; %>\
+         <option value="<%= option.value %>"><%= option.option %></option>\
+         <% }%>\
+        </select>\
+        <p class="<%= attributes.data_error_class %> help-block data-error"></p>\
+        <p class="<%= attributes.help_block_class %>help-block"><%= help %></p>\
+      </div>\
+    '),
+    options: [],
+    label: 'label',
+    initialize: function (options) {
+        BaseView.prototype.initialize.call(this, options);
+        if (typeof options.key != 'undefined') {
+            this.key = options.key;
+        } else {
+            throw new Error("editor bootstrap/SelectEditorView option obbligatoria non definita: 'key' equivalente all'attrib nel model")
+        }
+        if (typeof options.readonly != 'undefined' && options.readonly === true) {
+            this.readonly=true;
+        }
+        this.name = (typeof options.name != 'undefined')? options.name : this.key;
+
+        this.title = (typeof options.title != 'undefined') ? options.title : this.key;
+
+        if (typeof options.label != 'undefined') {
+            this.label = options.label;
+        }
+        this.initAttributes(options);
+        this.bind('editor.render', this.onEditorRender, this);
+        this.bind('editor.event', this.onEditorEvent, this);
+        this.bind('editor.model.error', this.onEditorModelError, this);
+        this.bind('editor.set.value', this.onEditorSetValue, this);
+        this.model.bind('model.commit.success', this.onEditorModelSuccess, this);
+        this.setSelectOptions(options);
+    },
+
+    /**
+     * inizializza gli attributes dell'editor
+     * @param options
+     */
+    initAttributes: function (options) {
+        this.attributes = (typeof options.attributes != 'undefined') ? options.attributes : this.attributes;
+        if (_.has(this.attributes, 'class')) {
+            if (!/(form-group)/.test(this.attributes.class)) {
+                this.attributes.class = 'form-group ' + this.attributes.class;
+            }
+        } else {
+            _.extend(this.attributes, {class: 'form-group'});
+        }
+        _.extend(this.attributes, {"data-field": this.key});
+
+    },
+
+    /**
+     *
+     * @param options
+     */
+    setSelectOptions: function (options) {
+        if (typeof options.options == 'undefined') {
+            return;
+        }
+        this.options.push({value: '', option: '---'});
+        _.each(options.options, function (option) {
+            if (typeof option == 'string') {
+                this.options.push({value: option, option: option});
+            } else if (typeof option == 'object') {
+                this.options.push({value: option.value, option: option.option});
+            }
+        }, this);
+        this.render(this.cid);
+
+    },
+
+    /**
+     * listener dell'evento editor.render
+     *
+     * @param e
+     */
+    onEditorRender: function (e) {
+        var data = {
+            name: this.name,
+            key: this.key,
+            title: this.title, label: this.label,
+            help: this.help,
+            editorId: this.name + this.model.cid,
+            attributes: this.view_attributes,
+            options: this.options,
+            disabled: (this.readonly)?'disabled ':''
+        };
+        this.$el.attr(this.attributes);
+        this.$el.html(this.template(data));
+        this.setValue(this.model.get(this.key));
+    },
+
+    /**
+     * listener dell'evento editor.set.value
+     *
+     * @param e
+     */
+    onEditorSetValue: function (e) {
+        this.$el.removeClass('has-error');
+        this.$('.help-block.data-error').empty();
+
+        this.$el.find("option[value='" + e.value + "']").attr('selected', 'selected');
+    },
+
+    /**
+     * sul commit del model si sono verificati errori ed il model ha emesso il relativo evento
+     *
+     * @param e
+     */
+    onEditorModelError: function (e) {
+        this.$el.addClass('has-error');
+        this.$('.help-block .data-error').empty();
+
+        _.mapObject(e.messages, function (val, key) {
+            var message = document.createElement('div');
+            var text = document.createTextNode(val);
+            message.appendChild(text);
+            this.$('.help-block.data-error').append(message);
+        }, this);
+
+    },
+
+    /**
+     * commit del model avvenuto con successo
+     *
+     * @param e
+     */
+    onEditorModelSuccess: function (e) {
+        this.$el.removeClass('has-error');
+        this.$el.addClass('has-success');
+
+    }
+});
+module.exports = SelectEditorView;
+},{"../../FormFieldEditorView":1}],7:[function(require,module,exports){
+'use strict';
+
+
+/**
+ * specs:
+ *
+ */
+var BaseView = require('../../FormFieldEditorView');
+
+/**
+ * genera una select con le options basate su una collection
+ *
+ */
+var SelectModelEditorView = BaseView.extend({
+    tagName: 'div',
+    template: _.template('\
+      <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
+      <div class="<%= attributes.field_class %>">\
+        <select class="<%= attributes.form_control_class %> form-control data-editor" id="<%= editorId %>">\
+         <% for(i=0;i < options.length;i++){ %>\
+         <% var option=options[i]; %>\
+         <option value="<%= option.value %>"><%= option.option %></option>\
+         <% }%>\
+        </select>\
+        <p class="<%= attributes.data_error_class %> help-block data-error"></p>\
+        <p class="<%= attributes.help_block_class %>help-block"><%= help %></p>\
+      </div>\
+    '),
+    options: [],
+    label: 'label',
+    initialize: function (options) {
+        BaseView.prototype.initialize.call(this, options);
+        if (typeof options.key != 'undefined') {
+            this.key = options.key;
+        } else {
+            throw new Error("editor bootstrap/SelectModelEditorView option obbligatoria non definita: 'key' equivalente all'attrib nel model")
+        }
+        this.name = (typeof options.name != 'undefined')? options.name : this.key;
+
+        if (!options.collection.prototype instanceof Backbone.Collection) {
+            throw new Error("editor bootstrap/SelectModelEditorView option deve essere un model");
+            return;
+        }
+        this.title = (typeof options.title != 'undefined') ? options.title : this.key;
+
+        if (typeof options.label != 'undefined') {
+            this.label = options.label;
+        }
+        this.initAttributes(options);
+
+        this.key_value = options.key_value;
+        this.key_option = options.key_option;
+        this.collection.bind('sync', this.setSelectOptions, this);
+        this.bind('editor.render', this.onEditorRender, this);
+        this.bind('editor.event', this.onEditorEvent, this);
+        this.bind('editor.model.error', this.onEditorModelError, this);
+        this.bind('editor.set.value', this.onEditorSetValue, this);
+        this.model.bind('model.commit.success', this.onEditorModelSuccess, this);
+
+        var fetch_data = (typeof options.fetch_data != 'undefined') ? options.fetch_data : {};
+        this.collection.fetch({data: fetch_data});
+    },
+
+    /**
+     * inizializza gli attributes dell'editor
+     * @param options
+     */
+    initAttributes: function (options) {
+        this.attributes = (typeof options.attributes != 'undefined') ? options.attributes : this.attributes;
+        if (_.has(this.attributes, 'class')) {
+            if (!/(form-group)/.test(this.attributes.class)) {
+                this.attributes.class = 'form-group ' + this.attributes.class;
+            }
+        } else {
+            _.extend(this.attributes, {class: 'form-group'});
+        }
+        _.extend(this.attributes, {"data-field": this.key});
+
+    },
+
+    /**
+     *
+     * @param options
+     */
+    setSelectOptions: function (options) {
+        // _.each(this.options, function (row) {
+        //     row.remove();
+        // }, this);
+        this.options = [];
+        this.options.push({value: '', option: '---'});
+        _.each(this.collection.models, function (model) {
+            var option_value = model.get(this.key_value);
+            if (typeof this.key_option == 'string') {
+                var option_option = model.get(this.key_option);
+            } else if (typeof this.key_option == 'object') {
+                var option_option = this.key_option.reduce(function (prev, curr) {
+                    var a = model.get(prev);
+                    var b = model.get(curr);
+                    return a + ' ' + b;
+                });
+            } else if (typeof this.key_option == 'function') {
+                var option_option = this.key_option(model);
+            }
+            this.options.push({value: option_value, option: option_option,});
+
+        }, this);
+        this.render(this.cid);
+
+    },
+
+    /**
+     * listener dell'evento editor.render
+     *
+     * @param e
+     */
+    onEditorRender: function (e) {
+        // console.log({'onEditorRender':e});
+        var data = {
+            name: this.name,
+
+            key: this.key,
+            title: this.title, label: this.label,
+            help: this.help,
+            editorId: this.name + this.model.cid,
+            attributes: this.view_attributes,
+            options: this.options
+        };
+
+        this.$el.attr(this.attributes);
+        this.$el.html(this.template(data));
+        this.setValue(this.model.get(this.key));
+    },
+
+    /**
+     * listener dell'evento editor.set.value
+     *
+     * @param e
+     */
+    onEditorSetValue: function (e) {
+        this.$el.removeClass('has-error');
+        this.$('.help-block.data-error').empty();
+
+        this.$el.find("option[value='" + e.value + "']").attr('selected', 'selected');
+    },
+    /**
+     * sul commit del model si sono verificati errori ed il model ha emesso il relativo evento
+     *
+     * @param e
+     */
+    onEditorModelError: function (e) {
+        this.$el.addClass('has-error');
+        this.$('.help-block .data-error').empty();
+
+        _.mapObject(e.messages, function (val, key) {
+            var message = document.createElement('div');
+            var text = document.createTextNode(val);
+            message.appendChild(text);
+            this.$('.help-block.data-error').append(message);
+        }, this);
+
+    },
+
+    /**
+     * commit del model avvenuto con successo
+     *
+     * @param e
+     */
+    onEditorModelSuccess: function (e) {
+        this.$el.removeClass('has-error');
+        this.$el.addClass('has-success');
+
+    },
+
+});
+module.exports = SelectModelEditorView;
 },{"../../FormFieldEditorView":1}],8:[function(require,module,exports){
+'use strict';
+
+
+/**
+ * specs:
+ *
+ */
+var TextEditorTemplate = require('./template/TextEditorTemplate.html');
+var ReadOnlyTextEditorTemplate = require('./template/ReadOnlyTextEditorTemplate.html');
+var FormFieldEditorView = require('../../FormFieldEditorView');
+
+var TextEditorView = FormFieldEditorView.extend({
+    tagName: 'div',
+    template: _.template(TextEditorTemplate),
+
+    view_attributes: {
+        label_class: 'col-md-3',
+        field_class: 'col-md-9',
+        form_control_class: '',
+        data_error_class: '',
+        help_block_class: ''
+    },
+
+    /**
+     *
+     * @param options
+     */
+    initialize: function (options) {
+        FormFieldEditorView.prototype.initialize.call(this, options);
+        if (typeof options.key != 'undefined') {
+            this.key = options.key;
+        } else {
+            throw new Error("editor bootstrap/InputTextEditorView option obbligatoria non definita: 'key' equivalente all'attrib nel model")
+        }
+        if (typeof options.readonly != 'undefined' && options.readonly === true) {
+            this.readonly=true;
+            this.template = _.template(ReadOnlyTextEditorTemplate);
+        }
+
+        this.title = (typeof options.title != 'undefined') ? options.title : this.key;
+        this.help = (typeof options.help != 'undefined') ? options.help : '';
+
+        this.initAttributes(options);
+        this.bind('editor.set.value', this.onEditorSetValue, this);
+        this.bind('editor.render', this.onEditorRender, this);
+        this.bind('editor.model.error', this.onEditorModelError, this);
+        this.model.bind('model.commit.success', this.onEditorModelSuccess, this);
+        this.render(this.cid);
+    },
+
+    /**
+     * inizializza gli attributes dell'editor
+     * @param options
+     */
+    initAttributes: function (options) {
+        this.attributes = (typeof options.attributes != 'undefined') ? options.attributes : this.attributes;
+        if (_.has(this.attributes, 'class')) {
+            if (!/(form-group)/.test(this.attributes.class)) {
+                this.attributes.class = 'form-group ' + this.attributes.class;
+            }
+        } else {
+            _.extend(this.attributes, {class: 'form-group'});
+        }
+        _.extend(this.attributes, {"data-field": this.key});
+
+    },
+
+    /**
+     * sul commit del model si sono verificati errori ed il model ha emesso il relativo evento
+     *
+     * @param e
+     */
+    onEditorModelError: function (e) {
+        this.$el.addClass('has-error');
+
+        this.$el.find('.help-block.data-error').empty();
+
+        _.mapObject(e.messages, function (val, key) {
+            var message = document.createElement('div');
+            var text = document.createTextNode(val);
+            message.appendChild(text);
+            this.$el.find('.help-block.data-error').append(message);
+        }, this);
+
+    },
+
+    /**
+     * commit del model avvenuto con successo
+     *
+     * @param e
+     */
+    onEditorModelSuccess: function (e) {
+        this.$el.removeClass('has-error');
+        this.$el.addClass('has-success');
+
+    },
+
+    /**
+     * listener dell'evento editor.render
+     *
+     * @param e
+     */
+    onEditorRender: function (e) {
+        var data = {
+            name: this.name,
+            key: this.key,
+            title: this.title,
+            help: this.help,
+            editorId: this.name + this.model.cid,
+            attributes: this.view_attributes
+        };
+        this.$el.attr(this.attributes);
+        this.$el.html(this.template(data));
+        this.setValue(this.model.get(this.key));
+    },
+
+    /**
+     * scrive il valore etnendo conto del tipo di template caricato
+     * @param value
+     */
+    writeValue: function (value) {
+        if (this.readonly) {
+            this.$('.data-editor').text(value);
+        } else {
+            this.$('.data-editor').val(value);
+        }
+    }, /**
+     * listener dell'evento editor.set.value
+     *
+     * @param e
+     */
+    onEditorSetValue: function (e) {
+        this.$el.removeClass('has-error');
+        this.$el.find('.help-block.data-error').empty();
+        this.writeValue(e.value);
+    },
+
+
+    /**
+     * evento generico
+     *
+     * @param e
+     */
+    onEvent: function (e) {
+        this.trigger('editor.event', this);
+        this.trigger('editor.text.event', this);
+    }
+
+
+});
+module.exports = TextEditorView;
+},{"../../FormFieldEditorView":1,"./template/ReadOnlyTextEditorTemplate.html":9,"./template/TextEditorTemplate.html":10}],9:[function(require,module,exports){
+module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <div class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\" readonly></div>\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>\n";
+
+},{}],10:[function(require,module,exports){
+module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <input class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\">\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>";
+
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var Router = Backbone.Router.extend({
@@ -891,7 +1095,7 @@ var Router = Backbone.Router.extend({
 });
 module.exports = Router;
 
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -928,6 +1132,7 @@ module.exports = Router;
     BbToolsForm.editors.DateTextEditorView = require('./Form/editors/bootstrap/DateTextEditorView');
     BbToolsForm.editors.SelectEditorView = require('./Form/editors/bootstrap/SelectEditorView');
     BbToolsForm.editors.SelectModelEditorView = require('./Form/editors/bootstrap/SelectModelEditorView');
+    BbToolsForm.editors.ReadOnlyEditorView = require('./Form/editors/bootstrap/ReadOnlyEditorView');
     BbToolsForm.editors.ButtonEditorView = require('./Form/editors/ButtonEditorView');
     BbToolsForm.editors.ButtonCommitEditorView = require('./Form/editors/ButtonCommitEditorView');
     // BbToolsForm.BootstrapForm = require('./Form/BootstrapForm');
@@ -944,4 +1149,4 @@ module.exports = Router;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Form/editors/ButtonCommitEditorView":2,"./Form/editors/ButtonEditorView":3,"./Form/editors/bootstrap/DateTextEditorView":4,"./Form/editors/bootstrap/SelectEditorView":5,"./Form/editors/bootstrap/SelectModelEditorView":6,"./Form/editors/bootstrap/TextEditorView":7,"./Router/CrudFormRouter":8}]},{},[9]);
+},{"./Form/editors/ButtonCommitEditorView":2,"./Form/editors/ButtonEditorView":3,"./Form/editors/bootstrap/DateTextEditorView":4,"./Form/editors/bootstrap/ReadOnlyEditorView":5,"./Form/editors/bootstrap/SelectEditorView":6,"./Form/editors/bootstrap/SelectModelEditorView":7,"./Form/editors/bootstrap/TextEditorView":8,"./Router/CrudFormRouter":11}]},{},[12]);
