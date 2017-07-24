@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+\(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 
@@ -1078,17 +1078,33 @@ var Router = Backbone.Router.extend({
     },
     /**
      * listener dell'evento model change:[attribute]
-     * @param e
+     * @param response
      */
-    onModelError: function (model, e) {
-        console.log(e);
-        if (e.status == 422) {
-            if (_.has(e.responseJSON.validation_messages, this.key)) {
-                var messages = _.propertyOf(e.responseJSON.validation_messages)(this.key);
+    onModelError: function (model, response, options) {
+        console.log(response);
+        if (response.status == 422) {
+            if (_.has(response.responseJSON.validation_messages, this.key)) {
+                var messages = _.propertyOf(response.responseJSON.validation_messages)(this.key);
                 this.trigger('editor.model.error', {'messages': messages});
             }
-        }
+            var message = "<h4>Entità non processabile</h4>";
+            message = message + "<h5>" + response.responseJSON.detail + "</h5>";
+            var modal_options = {
+                buttons: ['ok'],
+                message: message
+            };
+        } else {
 
+            var message = "<h4>" + response.responseJSON.title + "</h4>";
+            message = message + "<h5>" + response.responseJSON.detail + "</h5>";
+            var modal_options = {
+                buttons: ['ok'],
+                message: message
+            };
+        }
+            App.unblockUI();
+        var modal = new BbTools.View.Modal.Responsive(modal_options);
+        modal.show();
     },
 
 
