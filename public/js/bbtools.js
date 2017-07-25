@@ -198,19 +198,7 @@ var Model = require('./Model');
 
 var ApigilityModel = Model.extend({
 
-    /**
-     * idrata il model partendo dall'oggetto passato come data
-     * in apigility i dati sono nella chiave _embedded
-     *
-     * @param data
-     * @returns {*}
-     */
-    parse: function (data) {
-        _.mapObject(data._embedded, function (value, key) {
-            this.key = new Backbone.Model(value);
-        }, data);
-        return data;
-    },
+
 
 });
 module.exports = ApigilityModel;
@@ -274,18 +262,6 @@ var Model = Backbone.Model.extend({
     onUnSelect: function (e) {
     },
 
-    /**
-     * idrata il model partendo dall'oggetto passato come data
-     *
-     * @param data
-     * @returns {*}
-     */
-    parse: function (data) {
-        _.mapObject(data, function (value, key) {
-            this.key = new Backbone.Model(value);
-        }, data);
-        return data;
-    },
 
     /**
      * restituisce il testo per identificare il model nelle interfaccie
