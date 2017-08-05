@@ -324,10 +324,8 @@ var DateTextEditorView = FormFieldEditorView.extend({
         if (typeof options.read_replace != 'undefined') {
             this.read_replace =  options.read_replace;
         } else {
-            this.read_replace = '$1/$2/$3';
+            this.read_replace = '$3/$2/$1';
         }
-
-
     },
 
     /**
@@ -1081,32 +1079,20 @@ var Router = Backbone.Router.extend({
      * @param response
      */
     onModelError: function (model, response, options) {
-        console.log(response);
         if (response.status == 422) {
-            if (_.has(response.responseJSON.validation_messages, this.key)) {
-                var messages = _.propertyOf(response.responseJSON.validation_messages)(this.key);
-                this.trigger('editor.model.error', {'messages': messages});
-            }
             var message = "<h4>Entità non processabile</h4>";
-            message = message + "<h5>" + response.responseJSON.detail + "</h5>";
-            var modal_options = {
-                buttons: ['ok'],
-                message: message
-            };
         } else {
-
             var message = "<h4>" + response.responseJSON.title + "</h4>";
-            message = message + "<h5>" + response.responseJSON.detail + "</h5>";
-            var modal_options = {
-                buttons: ['ok'],
-                message: message
-            };
         }
-            App.unblockUI();
+        message = message + "<h5>" + response.responseJSON.detail + "</h5>";
+        var modal_options = {
+            buttons: ['ok'],
+            message: message
+        };
+        App.unblockUI();
         var modal = new BbTools.View.Modal.Responsive(modal_options);
         modal.show();
     },
-
 
 });
 module.exports = Router;

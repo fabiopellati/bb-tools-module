@@ -51,7 +51,7 @@ CrudGridRouter = Backbone.Router.extend({
      * @param options
      */
     onRequest: function (model, xhr, options) {
-        xhr.then(function () {
+        xhr.success(function () {
             App.unblockUI();
         });
         App.blockUI();
@@ -62,10 +62,6 @@ CrudGridRouter = Backbone.Router.extend({
      * @param response
      */
     onModelError: function (model, response, options) {
-        // console.log(model);
-        // console.log(response);
-        // console.log(options);
-        // return;
         if (response.status == 422) {
             if (_.has(response.responseJSON.validation_messages, this.key)) {
                 var messages = _.propertyOf(response.responseJSON.validation_messages)(this.key);
@@ -73,7 +69,7 @@ CrudGridRouter = Backbone.Router.extend({
             }
         }
         App.unblockUI();
-        var message = "<h4>"+ response.statusText +"</h4>";
+        var message = "<h4>" + response.statusText + "</h4>";
         message = message + "<h5>" + response.responseText + "</h5>";
         var modal_options = {
             buttons: ['ok'],
@@ -117,6 +113,7 @@ CrudGridRouter = Backbone.Router.extend({
      */
     onFilter: function (e) {
         var route = this.composeRoute();
+
         this.navigate(route, {replace: true});
         this.goFetch();
 
@@ -149,47 +146,50 @@ CrudGridRouter = Backbone.Router.extend({
     goMode: function (mode, page, second_a, second_b, third_a, third_b, fourth_a, fourth_b) {
         this.reset();
         var mode_split = mode.split('');
+
         var first = mode_split.shift();
         if (_.isNull(page)) page = 1;
 
         this.page = page;
-        var parserMode = function (mode, a, b,that) {
-            if (mode == 'o') {
+        var parserMode = function (mode, a, b, that) {
+            if (_.isNull(a) || _.isNull(b)) return;
+            if (mode === 'o') {
                 that.order = a;
                 that.order_direction = b;
                 that.gridView.defaultOrder(that.order, that.order_direction);
-            } else if (mode == 's') {
+            } else if (mode === 's') {
                 that.query = a;
                 that.search_into = b;
                 that.searchView.default(that.query);
-            } else if (mode == 'f') {
+            } else if (mode === 'f') {
                 if (_.isString(a)) {
-                    a =a.split(',')
+                    a = a.split(',')
                 }
                 if (_.isString(b)) {
-                    b =b.split(',')
+                    b = b.split(',')
                 }
 
                 var values = _.object(a, b);
                 _.each(values, function (element, index, list) {
-                        that.filters.set(index,element);
-                }) ;
+                    that.filters.set(index, element);
+                });
             }
 
         };
 
         var second = mode_split.shift();
         if (typeof second != 'undefined') {
-            parserMode(second, second_a, second_b,this);
+            parserMode(second, second_a, second_b, this);
         }
         var third = mode_split.shift();
         if (typeof third != 'undefined') {
-            parserMode(third, third_a, third_b,this);
+            parserMode(third, third_a, third_b, this);
         }
         var fourth = mode_split.shift();
         if (typeof fourth != 'undefined') {
-            parserMode(fourth, fourth_a, fourth_b,this);
+            parserMode(fourth, fourth_a, fourth_b, this);
         }
+
         this.goFetch();
     },
 
@@ -201,6 +201,7 @@ CrudGridRouter = Backbone.Router.extend({
      * questo evento viene gestito dalla callback error che imposta la pagina a 1
      */
     goFetch: function () {
+
         var data = {};
         if (!_.isNull(this.page)) data.page = this.page;
         if (!_.isNull(this.query)) data.search = this.query;
@@ -211,13 +212,19 @@ CrudGridRouter = Backbone.Router.extend({
         if (!_.isNull(this.order)) data.order = this.order;
         if (!_.isNull(this.order)) data.order_direction = this.order_direction;
         if (!_.isNull(this.filters)) data.filters_keys = _.keys(this.filters.attributes);
-        if (_.isString(data.filters_keys)) {
-            data.filters_keys = data.filters_keys.split(',')
-        }
-        if (!_.isNull(this.filters)) data.filters_values = _.values(this.filters.attributes);
-        if (_.isString(data.filters_values)) {
-            data.filters_values = data.filters_values.split(',')
-        }
+
+        // if (
+        //     !_.isNull(data.filters_keys) && !_.isNull(data.filters_values)
+        //     && !_.isUndefined(data.filters_keys) && !_.isUndefined(data.filters_values)
+        // ) {
+            if (_.isString(data.filters_keys)) {
+                data.filters_keys = data.filters_keys.split(',')
+            }
+            if (!_.isNull(this.filters)) data.filters_values = _.values(this.filters.attributes);
+            if (_.isString(data.filters_values)) {
+                data.filters_values = data.filters_values.split(',')
+            }
+        // }
         var that = this;
         var options = {
             error: function (e) {
@@ -254,7 +261,6 @@ CrudGridRouter = Backbone.Router.extend({
     composeRoute: function () {
         var route = '';
         var mode = 'p';
-
         if (_.isNull(this.page) || _.isUndefined(this.page)) this.page = 1;
         // if(!_.isNull(this.query)) this.page=1;
         route += this.page;
@@ -990,7 +996,8 @@ var PageNavigatorView = Backbone.View.extend({
         'click .pagination .next': 'next',
         'click .pagination .prev': 'prev',
         'click .pagination .last': 'last',
-        'click .pagination .page': 'page'
+        'click .pagination .page': 'page',
+        'click .pagination .refresh': 'refresh'
     },
 
     render: function () {
@@ -1048,6 +1055,11 @@ var PageNavigatorView = Backbone.View.extend({
         data.nav_pages = nav_pages;
         this.$el.html(this.template(data));
     },
+    refresh: function (e) {
+        this.trigger('go', {page: e.currentTarget.dataset.page});
+
+        // this.collection.first_page();
+    },
     first: function (e) {
         this.trigger('go', {page: e.currentTarget.dataset.page});
 
@@ -1074,7 +1086,7 @@ var PageNavigatorView = Backbone.View.extend({
 module.exports = PageNavigatorView;
 
 },{"./template/page_navigator.html":15}],15:[function(require,module,exports){
-module.exports = "<div class=\"row\">\n    <div class=\"col-md-5 col-sm-12\">\n        <div class=\"dataTables_info\" id=\"sample_1_info\" role=\"status\" aria-live=\"polite\">Pagina\n            <%= page %>\n            di <%= page_count %>\n            su <%= total_items %> record\n        </div>\n    </div>\n    <div class=\"col-md-7 col-sm-12\">\n        <div class=\"\" id=\"sample_1_paginate\">\n            <ul class=\"pagination\" style=\"visibility: visible;\">\n                <%\n                var first_class='disabled'\n                var prev_class='disabled'\n                if( page > 1) {\n                prev_class='prev';\n                first_class='first';\n                }\n                %>\n                <li class=\"<%= first_class %>\" data-page=\"<%= 1 %>\">\n                    <a title=\"First\">\n                        <i class=\"fa fa-angle-double-left\"></i>\n                    </a>\n                </li>\n                <li class=\"<%= prev_class %>\" data-page=\"<%= page - 1 %>\">\n                    <a title=\"Prev\">\n                        <i class=\"fa fa-angle-left\"></i>\n                    </a>\n                </li>\n\n                <% for(i=0;i < nav_pages.length;i++){ %>\n                <% var nav_page=nav_pages[i]; %>\n                <li class=\"<%= nav_page.class %>\" data-page=\"<%= nav_page.data_page %>\">\n                    <a title=\"Page_<%= nav_page.caption%>\"><%= nav_page.caption%></a>\n                </li>\n                <% } %>\n\n\n                <%\n                var next_class='disabled'\n                var last_class='disabled'\n                if( page < page_count) {\n                next_class='next';\n                last_class='last';\n                }\n                %>\n                <li class=\"<%= next_class%>\" data-page=\"<%= page + 1 %>\">\n                    <a title=\"Next\">\n                        <i class=\"fa fa-angle-right\"></i>\n                    </a>\n                </li>\n                <li class=\"<%= last_class%>\" data-page=\"<%= page_count %>\">\n                    <a title=\"Last\">\n                        <i class=\"fa fa-angle-double-right\"></i>\n                    </a>\n                </li>\n            </ul>\n        </div>\n    </div>\n</div>\n";
+module.exports = "<div class=\"row\">\n    <div class=\"col-md-5 col-sm-12\">\n        <div class=\"dataTables_info\" id=\"sample_1_info\" role=\"status\" aria-live=\"polite\">Pagina\n            <%= page %>\n            di <%= page_count %>\n            su <%= total_items %> record\n        </div>\n    </div>\n    <div class=\"col-md-7 col-sm-12\">\n        <div class=\"\" id=\"sample_1_paginate\">\n            <ul class=\"pagination\" style=\"visibility: visible;\">\n                <%\n                var first_class='disabled'\n                var prev_class='disabled'\n                if( page > 1) {\n                prev_class='prev';\n                first_class='first';\n                }\n                %>\n                <li class=\"<%= first_class %>\" data-page=\"<%= 1 %>\">\n                    <a title=\"First\">\n                        <i class=\"fa fa-angle-double-left\"></i>\n                    </a>\n                </li>\n                <li class=\"<%= prev_class %>\" data-page=\"<%= page - 1 %>\">\n                    <a title=\"Prev\">\n                        <i class=\"fa fa-angle-left\"></i>\n                    </a>\n                </li>\n\n                <% for(i=0;i < nav_pages.length;i++){ %>\n                <% var nav_page=nav_pages[i]; %>\n                <li class=\"<%= nav_page.class %>\" data-page=\"<%= nav_page.data_page %>\">\n                    <a title=\"Page_<%= nav_page.caption%>\"><%= nav_page.caption%></a>\n                </li>\n                <% } %>\n\n\n                <%\n                var next_class='disabled'\n                var last_class='disabled'\n                if( page < page_count) {\n                next_class='next';\n                last_class='last';\n                }\n                %>\n                <li class=\"<%= next_class%>\" data-page=\"<%= page + 1 %>\">\n                    <a title=\"Next\">\n                        <i class=\"fa fa-angle-right\"></i>\n                    </a>\n                </li>\n                <li class=\"<%= last_class%>\" data-page=\"<%= page_count %>\">\n                    <a title=\"Last\">\n                        <i class=\"fa fa-angle-double-right\"></i>\n                    </a>\n                </li>\n                <li class=\"refresh\" data-page=\"<%= page %>\">\n                    <a title=\"refresh\">\n                        <i class=\"fa fa-refresh\"></i>\n                    </a>\n                </li>\n            </ul>\n        </div>\n    </div>\n</div>\n";
 
 },{}],16:[function(require,module,exports){
 'use strict';

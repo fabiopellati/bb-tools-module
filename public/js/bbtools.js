@@ -64,15 +64,25 @@ var Collection = Backbone.Collection.extend({
      * @param e
      */
     onDeleteYes: function (e) {
+        App.blockUI();
+        var that=this;
         _.each(this._selected, function (id) {
             this.get(id).destroy({
+                wait:true,
                 error: function (model, response, options) {
                     var modal = new BbTools.View.Modal.Responsive({
                         id: 'delete_failed_' + model.getIdentifier(),
                         message: '<h4>la riga ' + model.getIdentifier() + ' non è stata eliminata</h4>'
                     });
                     modal.show();
-
+                },
+                success: function(context, model, resp, options){
+                    var modal = new BbTools.View.Modal.Responsive({
+                        id: 'delete_success_' + context.getIdentifier(),
+                        message: '<h4>la riga ' + context.getIdentifier() + ' è stata eliminata</h4>'
+                    });
+                    modal.show();
+                    // that.fetch();
 
                 }
             });
