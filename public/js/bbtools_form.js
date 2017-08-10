@@ -63,6 +63,7 @@ FormFieldEditorView = Backbone.View.extend({
         return this;
     },
 
+
     /**
      * evento generico
      *
@@ -987,7 +988,17 @@ var TextEditorView = FormFieldEditorView.extend({
         } else {
             this.$('.data-editor').val(value);
         }
-    }, /**
+    },
+    /**
+     *
+     *
+     */
+    focus:function(){
+            this.$('.data-editor').focus();
+        this.trigger('editor.focus', this);
+
+    },
+    /**
      * listener dell'evento editor.set.value
      *
      * @param e
