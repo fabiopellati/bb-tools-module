@@ -24,9 +24,12 @@ FormFieldEditorView = Backbone.View.extend({
     events: {
         'change .data-editor': 'onChange',
         'keyup .data-editor': 'onKeyUp',
+        'blur .data-editor': 'onBlur',
+        'focus .data-editor': 'onFocus',
     },
     attributes: {},
     view_attributes: {},
+    input_attributes: {},
     initialize: function (options) {
         if (!options.model) throw new Error("option obbligatoria non definita: 'model'");
         if (typeof  options.onEvent == 'function') {
@@ -39,6 +42,7 @@ FormFieldEditorView = Backbone.View.extend({
             this.onKeyUp = options.onKeyUp;
         }
         this.view_attributes = (typeof options.view_attributes != 'undefined') ? options.view_attributes : this.view_attributes;
+        this.input_attributes = (typeof options.input_attributes != 'undefined') ? options.input_attributes : this.input_attributes;
 
         this.bind('editor.value.invalid', this.onValueInvalid);
         if (typeof options.key != 'undefined') {
@@ -58,11 +62,11 @@ FormFieldEditorView = Backbone.View.extend({
     render: function (options) {
         // console.log({'render':options});
         // console.trace();
+
         this.trigger('editor.render', {'editor': this});
 
         return this;
     },
-
 
     /**
      * evento generico
@@ -71,6 +75,23 @@ FormFieldEditorView = Backbone.View.extend({
      */
     onEvent: function (e) {
         this.trigger('editor.event', this);
+    },
+
+    /**
+     * evento blur
+     *
+     * @param e
+     */
+    onBlur: function (e) {
+        this.trigger('editor.blur', this);
+    },
+    /**
+     * evento focus
+     *
+     * @param e
+     */
+    onFocus: function (e) {
+        this.trigger('editor.focus', this);
     },
 
     /**
@@ -136,6 +157,7 @@ FormFieldEditorView = Backbone.View.extend({
         var value = e.currentTarget.value;
         value = this.filter(value);
         this.model.set(this.key, value);
+        this.trigger('editor.change', e);
     },
 
     /**
@@ -143,6 +165,7 @@ FormFieldEditorView = Backbone.View.extend({
      * @param e
      */
     onKeyUp:function(e){
+        this.trigger('editor.keyup', e);
 
     },
 
@@ -395,7 +418,7 @@ module.exports = DateTextEditorView;
  */
 var FormFieldEditorView = require('../../FormFieldEditorView');
 
-var TextEditorView = FormFieldEditorView.extend({
+var ReadOnlyEditorView = FormFieldEditorView.extend({
     tagName: 'div',
     template: _.template('\
       <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
@@ -490,6 +513,7 @@ var TextEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorRender: function (e) {
+        this.$el.empty();
         var data = {
             name: this.name,
             key: this.key,
@@ -526,7 +550,7 @@ var TextEditorView = FormFieldEditorView.extend({
 
 
 });
-module.exports = TextEditorView;
+module.exports = ReadOnlyEditorView;
 },{"../../FormFieldEditorView":1}],6:[function(require,module,exports){
 'use strict';
 
@@ -885,6 +909,7 @@ var TextEditorView = FormFieldEditorView.extend({
         help_block_class: ''
     },
 
+
     /**
      *
      * @param options
@@ -897,7 +922,7 @@ var TextEditorView = FormFieldEditorView.extend({
             throw new Error("editor bootstrap/InputTextEditorView option obbligatoria non definita: 'key' equivalente all'attrib nel model")
         }
         if (typeof options.readonly != 'undefined' && options.readonly === true) {
-            this.readonly=true;
+            this.readonly = true;
             this.template = _.template(ReadOnlyTextEditorTemplate);
         }
 
@@ -965,13 +990,15 @@ var TextEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorRender: function (e) {
+        this.$el.empty();
         var data = {
             name: this.name,
             key: this.key,
             title: this.title,
             help: this.help,
             editorId: this.name + this.model.cid,
-            attributes: this.view_attributes
+            attributes: this.view_attributes,
+            input_attributes: this.input_attributes
         };
         this.$el.attr(this.attributes);
         this.$el.html(this.template(data));
@@ -993,8 +1020,8 @@ var TextEditorView = FormFieldEditorView.extend({
      *
      *
      */
-    focus:function(){
-            this.$('.data-editor').focus();
+    focus: function () {
+        this.$('.data-editor').focus();
         this.trigger('editor.focus', this);
 
     },
@@ -1027,7 +1054,7 @@ module.exports = TextEditorView;
 module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <div class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\" readonly></div>\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>\n";
 
 },{}],10:[function(require,module,exports){
-module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <input class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\">\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>";
+module.exports = "    <% var input_attributes_string = _.reduce(_.pairs(input_attributes), function(result, val){\n            return val[0]+': \\\"'+ val[1]+'\\\" ';\n    }) %>\n<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <input class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\"\n    <%= input_attributes_string %>   >\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>";
 
 },{}],11:[function(require,module,exports){
 'use strict';
