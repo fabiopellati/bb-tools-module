@@ -723,7 +723,8 @@ var BaseView = require('../../FormFieldEditorView');
  * genera una select con le options basate su una collection
  *
  */
-var SelectModelEditorView = BaseView.extend({
+var SelectModelEditorView;
+SelectModelEditorView = BaseView.extend({
     tagName: 'div',
     template: _.template('\
       <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
@@ -747,12 +748,12 @@ var SelectModelEditorView = BaseView.extend({
         } else {
             throw new Error("editor bootstrap/SelectModelEditorView option obbligatoria non definita: 'key' equivalente all'attrib nel model")
         }
-        this.name = (typeof options.name != 'undefined')? options.name : this.key;
+        this.name = (typeof options.name != 'undefined') ? options.name : this.key;
 
-        if (!options.collection.prototype instanceof Backbone.Collection) {
-            throw new Error("editor bootstrap/SelectModelEditorView option deve essere un model");
-            return;
-        }
+        // if (!options.collection.prototype instanceof Backbone.Collection) {
+        //     throw new Error("editor bootstrap/SelectModelEditorView option deve essere un model");
+        //     return;
+        // }
         this.title = (typeof options.title != 'undefined') ? options.title : this.key;
 
         if (typeof options.label != 'undefined') {
@@ -762,15 +763,18 @@ var SelectModelEditorView = BaseView.extend({
 
         this.key_value = options.key_value;
         this.key_option = options.key_option;
-        this.collection.bind('sync', this.setSelectOptions, this);
+
         this.bind('editor.render', this.onEditorRender, this);
         this.bind('editor.event', this.onEditorEvent, this);
         this.bind('editor.model.error', this.onEditorModelError, this);
         this.bind('editor.set.value', this.onEditorSetValue, this);
         this.model.bind('model.commit.success', this.onEditorModelSuccess, this);
-
-        var fetch_data = (typeof options.fetch_data != 'undefined') ? options.fetch_data : {};
-        this.collection.fetch({data: fetch_data});
+        if (_.isObject(this.collection)) {
+            var fetch_data = (typeof options.fetch_data != 'undefined') ? options.fetch_data : {};
+            this.setCollection({data: fetch_data});
+        } else {
+            this.setSelectOptions();
+        }
     },
 
     /**
@@ -800,22 +804,25 @@ var SelectModelEditorView = BaseView.extend({
         // }, this);
         this.options = [];
         this.options.push({value: '', option: '---'});
-        _.each(this.collection.models, function (model) {
-            var option_value = model.get(this.key_value);
-            if (typeof this.key_option == 'string') {
-                var option_option = model.get(this.key_option);
-            } else if (typeof this.key_option == 'object') {
-                var option_option = this.key_option.reduce(function (prev, curr) {
-                    var a = model.get(prev);
-                    var b = model.get(curr);
-                    return a + ' ' + b;
-                });
-            } else if (typeof this.key_option == 'function') {
-                var option_option = this.key_option(model);
-            }
-            this.options.push({value: option_value, option: option_option,});
+        if (_.isObject(this.collection)) {
 
-        }, this);
+            _.each(this.collection.models, function (model) {
+                var option_value = model.get(this.key_value);
+                if (typeof this.key_option == 'string') {
+                    var option_option = model.get(this.key_option);
+                } else if (typeof this.key_option == 'object') {
+                    var option_option = this.key_option.reduce(function (prev, curr) {
+                        var a = model.get(prev);
+                        var b = model.get(curr);
+                        return a + ' ' + b;
+                    });
+                } else if (typeof this.key_option == 'function') {
+                    var option_option = this.key_option(model);
+                }
+                this.options.push({value: option_value, option: option_option,});
+
+            }, this);
+        }
         this.render(this.cid);
 
     },
@@ -882,6 +889,26 @@ var SelectModelEditorView = BaseView.extend({
         this.$el.addClass('has-success');
 
     },
+
+    /**
+     * options can contain data for fetch and collection
+     *
+     */
+    setCollection: function (options) {
+
+        if (_.isObject(this.collection)) {
+            this.collection.off();
+        }
+        if (_.isObject(options.collection)) {
+            this.collection = options.collection;
+        }
+        if (_.isObject(this.collection)) {
+            this.collection.bind('sync', this.setSelectOptions, this);
+            this.collection.fetch(options.data);
+        }
+
+
+    }
 
 });
 module.exports = SelectModelEditorView;
