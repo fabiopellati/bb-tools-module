@@ -185,8 +185,24 @@ FormFieldEditorView = Backbone.View.extend({
      */
     filter: function (value) {
         return value;
-    }
+    },
 
+    /**
+     *
+     */
+    resetStatusClass:function(){
+        this.$el.removeClass('has-error');
+        this.$el.removeClass('has-success');
+        this.$el.removeClass('has-warning');
+        this.$el.find('.help-block.data-error').empty();
+    },
+
+    /**
+     *
+     */
+    resetDataError:function(){
+        this.$el.find('.help-block.data-error').empty();
+    }
 
 });
 module.exports = FormFieldEditorView;
@@ -399,8 +415,8 @@ var DateTextEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorSetValue: function (e) {
-        this.$el.removeClass('has-error');
-        this.$el.find('.help-block.data-error').empty();
+        this.resetStatusClass();
+        this.resetDataError();
         var value = this.filterForRead(e.value);
         this.writeValue(value)
 
@@ -483,9 +499,8 @@ var ReadOnlyEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorModelError: function (e) {
-        this.$el.addClass('has-error');
-
-        this.$el.find('.help-block.data-error').empty();
+        this.resetStatusClass();
+        this.resetDataError();
 
         _.mapObject(e.messages, function (val, key) {
             var message = document.createElement('div');
@@ -502,8 +517,11 @@ var ReadOnlyEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorModelSuccess: function (e) {
-        this.$el.removeClass('has-error');
+        this.resetStatusClass();
+        this.resetDataError();
+
         this.$el.addClass('has-success');
+
 
     },
 
@@ -533,7 +551,9 @@ var ReadOnlyEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorSetValue: function (e) {
-        this.$el.removeClass('has-error');
+        this.resetStatusClass();
+        this.resetDataError();
+
         this.$el.find('.help-block.data-error').empty();
         this.writeValue(e.value)
     },
@@ -560,6 +580,7 @@ module.exports = ReadOnlyEditorView;
  *
  */
 var BaseView = require('../../FormFieldEditorView');
+var SelectEditorTemplate = require('./template/SelectEditorTemplate.html');
 
 /**
  * genera una select con le options statiche
@@ -567,20 +588,7 @@ var BaseView = require('../../FormFieldEditorView');
  */
 var SelectEditorView = BaseView.extend({
     tagName: 'div',
-    template: _.template('\
-      <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
-      <div class="<%= attributes.field_class %>">\
-        <select class="<%= attributes.form_control_class %> form-control data-editor" id="<%= editorId %>" <%=\
-         disabled%> >\
-         <% for(i=0;i < options.length;i++){ %>\
-         <% var option=options[i]; %>\
-         <option value="<%= option.value %>"><%= option.option %></option>\
-         <% }%>\
-        </select>\
-        <p class="<%= attributes.data_error_class %> help-block data-error"></p>\
-        <p class="<%= attributes.help_block_class %>help-block"><%= help %></p>\
-      </div>\
-    '),
+    template: _.template(SelectEditorTemplate),
     options: [],
     label: 'label',
     initialize: function (options) {
@@ -631,9 +639,10 @@ var SelectEditorView = BaseView.extend({
      * @param options
      */
     setSelectOptions: function (options) {
-        if (typeof options.options == 'undefined') {
+        if (typeof options.options === 'undefined') {
             return;
         }
+        this.options=[];
         this.options.push({value: '', option: '---'});
         _.each(options.options, function (option) {
             if (typeof option == 'string') {
@@ -673,8 +682,8 @@ var SelectEditorView = BaseView.extend({
      * @param e
      */
     onEditorSetValue: function (e) {
-        this.$el.removeClass('has-error');
-        this.$('.help-block.data-error').empty();
+        this.resetStatusClass();
+        this.resetDataError();
 
         this.$el.find("option[value='" + e.value + "']").attr('selected', 'selected');
     },
@@ -686,8 +695,7 @@ var SelectEditorView = BaseView.extend({
      */
     onEditorModelError: function (e) {
         this.$el.addClass('has-error');
-        this.$('.help-block .data-error').empty();
-
+        this.$el.removeClass('has-warning');
         _.mapObject(e.messages, function (val, key) {
             var message = document.createElement('div');
             var text = document.createTextNode(val);
@@ -703,13 +711,16 @@ var SelectEditorView = BaseView.extend({
      * @param e
      */
     onEditorModelSuccess: function (e) {
-        this.$el.removeClass('has-error');
+        this.resetStatusClass();
+        this.resetDataError();
+
         this.$el.addClass('has-success');
+
 
     }
 });
 module.exports = SelectEditorView;
-},{"../../FormFieldEditorView":1}],7:[function(require,module,exports){
+},{"../../FormFieldEditorView":1,"./template/SelectEditorTemplate.html":10}],7:[function(require,module,exports){
 'use strict';
 
 
@@ -718,6 +729,7 @@ module.exports = SelectEditorView;
  *
  */
 var BaseView = require('../../FormFieldEditorView');
+var SelectEditorTemplate = require('./template/SelectEditorTemplate.html');
 
 /**
  * genera una select con le options basate su una collection
@@ -726,19 +738,7 @@ var BaseView = require('../../FormFieldEditorView');
 var SelectModelEditorView;
 SelectModelEditorView = BaseView.extend({
     tagName: 'div',
-    template: _.template('\
-      <label class="<%= attributes.label_class %> control-label" for="<%= editorId %>"><%= title %></label>\
-      <div class="<%= attributes.field_class %>">\
-        <select class="<%= attributes.form_control_class %> form-control data-editor" id="<%= editorId %>">\
-         <% for(i=0;i < options.length;i++){ %>\
-         <% var option=options[i]; %>\
-         <option value="<%= option.value %>"><%= option.option %></option>\
-         <% }%>\
-        </select>\
-        <p class="<%= attributes.data_error_class %> help-block data-error"></p>\
-        <p class="<%= attributes.help_block_class %>help-block"><%= help %></p>\
-      </div>\
-    '),
+    template: _.template(SelectEditorTemplate),
     options: [],
     label: 'label',
     initialize: function (options) {
@@ -836,13 +836,14 @@ SelectModelEditorView = BaseView.extend({
         // console.log({'onEditorRender':e});
         var data = {
             name: this.name,
-
             key: this.key,
             title: this.title, label: this.label,
             help: this.help,
             editorId: this.name + this.model.cid,
             attributes: this.view_attributes,
-            options: this.options
+            options: this.options,
+            disabled: (this.readonly)?'disabled ':''
+
         };
 
         this.$el.attr(this.attributes);
@@ -856,8 +857,8 @@ SelectModelEditorView = BaseView.extend({
      * @param e
      */
     onEditorSetValue: function (e) {
-        this.$el.removeClass('has-error');
-        this.$('.help-block.data-error').empty();
+        this.resetStatusClass();
+        this.resetDataError();
 
         this.$el.find("option[value='" + e.value + "']").attr('selected', 'selected');
     },
@@ -867,9 +868,9 @@ SelectModelEditorView = BaseView.extend({
      * @param e
      */
     onEditorModelError: function (e) {
+        this.resetStatusClass();
+        this.resetDataError();
         this.$el.addClass('has-error');
-        this.$('.help-block .data-error').empty();
-
         _.mapObject(e.messages, function (val, key) {
             var message = document.createElement('div');
             var text = document.createTextNode(val);
@@ -885,7 +886,8 @@ SelectModelEditorView = BaseView.extend({
      * @param e
      */
     onEditorModelSuccess: function (e) {
-        this.$el.removeClass('has-error');
+        this.resetStatusClass();
+        this.resetDataError();
         this.$el.addClass('has-success');
 
     },
@@ -912,7 +914,7 @@ SelectModelEditorView = BaseView.extend({
 
 });
 module.exports = SelectModelEditorView;
-},{"../../FormFieldEditorView":1}],8:[function(require,module,exports){
+},{"../../FormFieldEditorView":1,"./template/SelectEditorTemplate.html":10}],8:[function(require,module,exports){
 'use strict';
 
 
@@ -1006,7 +1008,8 @@ var TextEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorModelSuccess: function (e) {
-        this.$el.removeClass('has-error');
+        this.resetStatusClass();
+        this.resetDataError();
         this.$el.addClass('has-success');
 
     },
@@ -1058,8 +1061,8 @@ var TextEditorView = FormFieldEditorView.extend({
      * @param e
      */
     onEditorSetValue: function (e) {
-        this.$el.removeClass('has-error');
-        this.$el.find('.help-block.data-error').empty();
+        this.resetStatusClass();
+        this.resetDataError();
         this.writeValue(e.value);
     },
 
@@ -1077,13 +1080,16 @@ var TextEditorView = FormFieldEditorView.extend({
 
 });
 module.exports = TextEditorView;
-},{"../../FormFieldEditorView":1,"./template/ReadOnlyTextEditorTemplate.html":9,"./template/TextEditorTemplate.html":10}],9:[function(require,module,exports){
+},{"../../FormFieldEditorView":1,"./template/ReadOnlyTextEditorTemplate.html":9,"./template/TextEditorTemplate.html":11}],9:[function(require,module,exports){
 module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <div class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\" readonly></div>\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>\n";
 
 },{}],10:[function(require,module,exports){
-module.exports = "    <% var input_attributes_string = _.reduce(_.pairs(input_attributes), function(result, val){\n            return val[0]+': \\\"'+ val[1]+'\\\" ';\n    }) %>\n<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <input class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\"\n    <%= input_attributes_string %>   >\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>";
+module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <select class=\"<%= attributes.form_control_class %> form-control data-editor\"\n            id=\"<%= editorId %>\" <%=disabled%> >\n                                 <% for(i=0;i < options.length;i++){%>\n                                 <% var option=options[i];%>\n    <option value=\"<%= option.value %>\"><%= option.option %></option>\n                                 <% }%>\n    </select>\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>";
 
 },{}],11:[function(require,module,exports){
+module.exports = "    <% var input_attributes_string = _.reduce(_.pairs(input_attributes), function(result, val){\n            return val[0]+': \\\"'+ val[1]+'\\\" ';\n    }) %>\n<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <input class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\"\n    <%= input_attributes_string %>   >\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>";
+
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var Router = Backbone.Router.extend({
@@ -1162,7 +1168,7 @@ var Router = Backbone.Router.extend({
 });
 module.exports = Router;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1216,4 +1222,4 @@ module.exports = Router;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Form/editors/ButtonCommitEditorView":2,"./Form/editors/ButtonEditorView":3,"./Form/editors/bootstrap/DateTextEditorView":4,"./Form/editors/bootstrap/ReadOnlyEditorView":5,"./Form/editors/bootstrap/SelectEditorView":6,"./Form/editors/bootstrap/SelectModelEditorView":7,"./Form/editors/bootstrap/TextEditorView":8,"./Router/CrudFormRouter":11}]},{},[12]);
+},{"./Form/editors/ButtonCommitEditorView":2,"./Form/editors/ButtonEditorView":3,"./Form/editors/bootstrap/DateTextEditorView":4,"./Form/editors/bootstrap/ReadOnlyEditorView":5,"./Form/editors/bootstrap/SelectEditorView":6,"./Form/editors/bootstrap/SelectModelEditorView":7,"./Form/editors/bootstrap/TextEditorView":8,"./Router/CrudFormRouter":12}]},{},[13]);
