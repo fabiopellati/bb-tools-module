@@ -650,6 +650,9 @@ var HeadCellStringView = Backbone.View.extend({
         } else {
             this.label = this.value.replace('_', ' ');
         }
+      if (typeof options.sortable != 'undefined') {
+        this.sortable = options.sortable;
+      }
         this.template = _.template(template);
     },
     render: function () {
@@ -660,7 +663,7 @@ var HeadCellStringView = Backbone.View.extend({
 
 
         this.$el.append(this.template({value: this.value, label: this.label}));
-        if (this.value == "") {
+        if (this.value == "" || this.sortable===false) {
             this.$('.sortable').removeClass('sortable');
             this.$('.both').removeClass('both');
         }
@@ -695,6 +698,7 @@ var HeadCellStringView = Backbone.View.extend({
     }
 });
 module.exports = HeadCellStringView;
+
 },{"./template/head_cell.html":13}],10:[function(require,module,exports){
 'use strict';
 
