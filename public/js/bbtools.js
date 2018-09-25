@@ -339,6 +339,7 @@ var Responsive = Backbone.View.extend({
         } else {
             this.template = _.template(template);
         }
+
         if (typeof  options.id != 'undefined') {
             this.id = options.id;
         }
