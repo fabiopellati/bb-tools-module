@@ -344,85 +344,34 @@ var DateTextEditorView = FormFieldEditorView.extend({
    * @param options
    */
   initialize: function (options) {
-    FormFieldEditorView.prototype.initialize.call(this, options);
+
     if (typeof options.write_pattern !== 'undefined') {
-      this.write_pattern = options.write_pattern;
+      this.write_pattern =  options.write_pattern;
     } else {
       this.write_pattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
     }
     if (typeof options.write_replace !== 'undefined') {
-      this.write_replace = options.write_replace;
+      this.write_replace =  options.write_replace;
     } else {
       this.write_replace = '$3-$2-$1';
     }
 
     if (typeof options.read_pattern !== 'undefined') {
-      this.read_pattern = options.read_pattern;
+      this.read_pattern =  options.read_pattern;
     } else {
       this.read_pattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
     }
     if (typeof options.read_replace !== 'undefined') {
-      this.read_replace = options.read_replace;
+      this.read_replace =  options.read_replace;
     } else {
       this.read_replace = '$3/$2/$1';
     }
+
+
+    FormFieldEditorView.prototype.initialize.call(this, options);
   },
 
-  /**
-   *
-   * @param value
-   * @returns {*}
-   */
-  filter: function (value) {
-    return this.filterForWrite(value);
-  },
 
-  /**
-   * filtra value per la scrittura sul model
-   *
-   * @param value
-   * @returns {*}
-   */
-  filterForWrite: function (value) {
-    var pattern = this.write_pattern;
-    if (_.isString(value) && !_.isEmpty(value)) {
-      if (pattern.test(value)) {
-        var replaced = value.replace(pattern, this.write_replace);
-        return replaced;
-      }
-    }
-    return value;
-
-  },
-  /**
-   * filtra value per la scrittura sul model
-   *
-   * @param value
-   * @returns {*}
-   */
-  filterForRead: function (value) {
-    var pattern = this.read_pattern;
-    if (_.isString(value) && !_.isEmpty(value)) {
-      if (pattern.test(value)) {
-        var replaced = value.replace(pattern, this.read_replace);
-        return replaced;
-      }
-    }
-    return value;
-
-  },
-  /**
-   * listener dell'evento editor.set.value
-   *
-   * @param e
-   */
-  onEditorSetValue: function (e) {
-    this.resetStatusClass();
-    this.resetDataError();
-    var value = this.filterForRead(e.value);
-    this.writeValue(value)
-
-  }
 
 });
 module.exports = DateTextEditorView;
@@ -957,6 +906,27 @@ var TextEditorView = FormFieldEditorView.extend({
             this.readonly = true;
             this.template = _.template(ReadOnlyTextEditorTemplate);
         }
+      if (typeof options.write_pattern !== 'undefined') {
+        this.write_pattern = options.write_pattern;
+      } else {
+        this.write_pattern = /^(.+)$/;
+      }
+      if (typeof options.write_replace !== 'undefined') {
+        this.write_replace = options.write_replace;
+      } else {
+        this.write_replace = '$1';
+      }
+
+      if (typeof options.read_pattern !== 'undefined') {
+        this.read_pattern = options.read_pattern;
+      } else {
+        this.read_pattern = /^(.+)$/;
+      }
+      if (typeof options.read_replace !== 'undefined') {
+        this.read_replace = options.read_replace;
+      } else {
+        this.read_replace = '$1';
+      }
 
         this.title = (typeof options.title != 'undefined') ? options.title : this.key;
         this.help = (typeof options.help != 'undefined') ? options.help : '';
@@ -1066,7 +1036,9 @@ var TextEditorView = FormFieldEditorView.extend({
     onEditorSetValue: function (e) {
         this.resetStatusClass();
         this.resetDataError();
-        this.writeValue(e.value);
+      var value = this.filterForRead(e.value);
+
+        this.writeValue(value);
     },
 
 
@@ -1078,11 +1050,57 @@ var TextEditorView = FormFieldEditorView.extend({
     onEvent: function (e) {
         this.trigger('editor.event', this);
         this.trigger('editor.text.event', this);
+    },
+  /**
+   * filtro da apllicare al value prima di scrivere nel model
+   *
+   * @param value
+   * @returns {*}
+   */
+  filter: function (value) {
+    return this.filterForWrite(value);
+  },
+
+
+  /**
+   * filtra value per la scrittura sul model
+   *
+   * @param value
+   * @returns {*}
+   */
+  filterForWrite: function (value) {
+    var pattern = this.write_pattern;
+    if (_.isString(value) && !_.isEmpty(value)) {
+      if (pattern.test(value)) {
+        var replaced = value.replace(pattern, this.write_replace);
+        return replaced;
+      }
     }
+    return value;
+
+  },
+  /**
+   * filtra value per la scrittura sul model
+   *
+   * @param value
+   * @returns {*}
+   */
+  filterForRead: function (value) {
+    var pattern = this.read_pattern;
+    if (_.isString(value) && !_.isEmpty(value)) {
+      if (pattern.test(value)) {
+        var replaced = value.replace(pattern, this.read_replace);
+        return replaced;
+      }
+    }
+    return value;
+
+  },
 
 
 });
 module.exports = TextEditorView;
+
 },{"../../FormFieldEditorView":1,"./template/ReadOnlyTextEditorTemplate.html":9,"./template/TextEditorTemplate.html":11}],9:[function(require,module,exports){
 module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <div class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\" readonly></div>\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>\n";
 
