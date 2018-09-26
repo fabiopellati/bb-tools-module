@@ -349,6 +349,7 @@ var BodyCellComponentView = Backbone.View.extend({
         if (typeof this.attributes == 'undefined') this.attributes = {};
         this.attributes = _.extend(this.attributes, {'data-model-id': this.model.get('id')});
         this.$el.attr(this.attributes);
+        this.$el.model=this.model;
         this.$el.append(this.value.render().el);
         this.delegateEvents();
         return this;
@@ -359,6 +360,7 @@ var BodyCellComponentView = Backbone.View.extend({
     }
 });
 module.exports = BodyCellComponentView;
+
 },{}],4:[function(require,module,exports){
 'use strict';
 
@@ -1236,6 +1238,7 @@ var ButtonGroupView = Backbone.View.extend({
         if (typeof this.attributes != 'undefined') this.$el.attr(this.attributes);
         // this.$el.empty();
         _.each(this.childs, function (child) {
+            child.model=this.model;
             this.$el.append(child.el);
             child.render();
         }, this);
@@ -1249,6 +1252,7 @@ var ButtonGroupView = Backbone.View.extend({
 
 });
 module.exports = ButtonGroupView;
+
 },{}],19:[function(require,module,exports){
 'use strict';
 

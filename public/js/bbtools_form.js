@@ -385,7 +385,7 @@ var DateTextEditorView = FormFieldEditorView.extend({
      */
     filterForWrite: function (value) {
         var pattern =this.write_pattern;
-        if (_.isString(value)) {
+        if (_.isString(value) && !_.isEmpty(value)) {
             if (pattern.test(value)) {
                 var replaced = value.replace(pattern, this.write_replace);
                 return replaced;
@@ -424,6 +424,7 @@ var DateTextEditorView = FormFieldEditorView.extend({
 
 });
 module.exports = DateTextEditorView;
+
 },{"./TextEditorView":8}],5:[function(require,module,exports){
 'use strict';
 
