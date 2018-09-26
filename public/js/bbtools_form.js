@@ -339,88 +339,90 @@ module.exports = ButtonEditorView;
 var FormFieldEditorView = require('./TextEditorView');
 
 var DateTextEditorView = FormFieldEditorView.extend({
-    /**
-     *
-     * @param options
-     */
-    initialize: function (options) {
-        FormFieldEditorView.prototype.initialize.call(this, options);
-        if (typeof options.write_pattern != 'undefined') {
-            this.write_pattern =  options.write_pattern;
-        } else {
-            this.write_pattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-        }
-        if (typeof options.write_replace != 'undefined') {
-            this.write_replace =  options.write_replace;
-        } else {
-            this.write_replace = '$3-$2-$1';
-        }
-
-        if (typeof options.read_pattern != 'undefined') {
-            this.read_pattern =  options.read_pattern;
-        } else {
-            this.read_pattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
-        }
-        if (typeof options.read_replace != 'undefined') {
-            this.read_replace =  options.read_replace;
-        } else {
-            this.read_replace = '$3/$2/$1';
-        }
-    },
-
-    /**
-     *
-     * @param value
-     * @returns {*}
-     */
-    filter: function (value) {
-        return this.filterForWrite(value);
-    },
-
-    /**
-     * filtra value per la scrittura sul model
-     *
-     * @param value
-     * @returns {*}
-     */
-    filterForWrite: function (value) {
-        var pattern =this.write_pattern;
-        if (_.isString(value) && !_.isEmpty(value)) {
-            if (pattern.test(value)) {
-                var replaced = value.replace(pattern, this.write_replace);
-                return replaced;
-            }
-        }
-        return value;
-
-    },
-    /**
-     * filtra value per la scrittura sul model
-     *
-     * @param value
-     * @returns {*}
-     */
-    filterForRead: function (value) {
-        var pattern =this.read_pattern;
-        if (_.isString(value) && pattern.test(value)) {
-            var replaced = value.replace(pattern, this.read_replace);
-            return replaced;
-        }
-        return value;
-
-    },
-    /**
-     * listener dell'evento editor.set.value
-     *
-     * @param e
-     */
-    onEditorSetValue: function (e) {
-        this.resetStatusClass();
-        this.resetDataError();
-        var value = this.filterForRead(e.value);
-        this.writeValue(value)
-
+  /**
+   *
+   * @param options
+   */
+  initialize: function (options) {
+    FormFieldEditorView.prototype.initialize.call(this, options);
+    if (typeof options.write_pattern !== 'undefined') {
+      this.write_pattern = options.write_pattern;
+    } else {
+      this.write_pattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
     }
+    if (typeof options.write_replace !== 'undefined') {
+      this.write_replace = options.write_replace;
+    } else {
+      this.write_replace = '$3-$2-$1';
+    }
+
+    if (typeof options.read_pattern !== 'undefined') {
+      this.read_pattern = options.read_pattern;
+    } else {
+      this.read_pattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+    }
+    if (typeof options.read_replace !== 'undefined') {
+      this.read_replace = options.read_replace;
+    } else {
+      this.read_replace = '$3/$2/$1';
+    }
+  },
+
+  /**
+   *
+   * @param value
+   * @returns {*}
+   */
+  filter: function (value) {
+    return this.filterForWrite(value);
+  },
+
+  /**
+   * filtra value per la scrittura sul model
+   *
+   * @param value
+   * @returns {*}
+   */
+  filterForWrite: function (value) {
+    var pattern = this.write_pattern;
+    if (_.isString(value) && !_.isEmpty(value)) {
+      if (pattern.test(value)) {
+        var replaced = value.replace(pattern, this.write_replace);
+        return replaced;
+      }
+    }
+    return value;
+
+  },
+  /**
+   * filtra value per la scrittura sul model
+   *
+   * @param value
+   * @returns {*}
+   */
+  filterForRead: function (value) {
+    var pattern = this.read_pattern;
+    if (_.isString(value) && !_.isEmpty(value)) {
+      if (pattern.test(value)) {
+        var replaced = value.replace(pattern, this.read_replace);
+        return replaced;
+      }
+    }
+    return value;
+
+  },
+  /**
+   * listener dell'evento editor.set.value
+   *
+   * @param e
+   */
+  onEditorSetValue: function (e) {
+    this.resetStatusClass();
+    this.resetDataError();
+    var value = this.filterForRead(e.value);
+    this.writeValue(value)
+
+  }
 
 });
 module.exports = DateTextEditorView;
@@ -1088,7 +1090,7 @@ module.exports = "<label class=\"<%= attributes.label_class %> control-label\" f
 module.exports = "<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <select class=\"<%= attributes.form_control_class %> form-control data-editor\"\n            id=\"<%= editorId %>\" <%=disabled%> >\n                                 <% for(i=0;i < options.length;i++){%>\n                                 <% var option=options[i];%>\n    <option value=\"<%= option.value %>\"><%= option.option %></option>\n                                 <% }%>\n    </select>\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>";
 
 },{}],11:[function(require,module,exports){
-module.exports = "    <% var input_attributes_string = _.reduce(_.pairs(input_attributes), function(result, val){\n            return result+val[0]+': \\\"'+ val[1]+'\\\" ';\n    }.'') %>\n<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <input class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\"\n    <%= input_attributes_string %>   >\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>\n";
+module.exports = "    <% var input_attributes_string = _.reduce(_.pairs(input_attributes), function(result, val){\n            return result+val[0]+': \\\"'+ val[1]+'\\\" ';\n    },'') %>\n<label class=\"<%= attributes.label_class %> control-label\" for=\"<%= editorId %>\"><%= title %></label>\n<div class=\"<%= attributes.field_class %>\">\n    <input class=\"<%= attributes.form_control_class %> form-control data-editor\" id=\"<%= editorId %>\"\n    <%= input_attributes_string %>   >\n    <p class=\"<%= attributes.data_error_class %> help-block data-error\"></p>\n    <p class=\"<%= attributes.help_block_class %>help-block\"><%= help %></p>\n</div>\n";
 
 },{}],12:[function(require,module,exports){
 'use strict';
