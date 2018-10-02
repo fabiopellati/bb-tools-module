@@ -48,7 +48,7 @@ var Collection = Backbone.Collection.extend({
         modal.bind('modal.show', this.onEvent, this);
         modal.bind('modal.before.hide', this.onEvent, this);
         modal.bind('modal.hide', this.onEvent, this);
-        modal.bind('yes', this.onDeleteYes, this);
+        modal.once('yes', this.onDeleteYes, this);
         modal.show();
     },
     /**
@@ -183,6 +183,7 @@ var Collection = Backbone.Collection.extend({
 });
 
 module.exports = Collection;
+
 },{}],2:[function(require,module,exports){
 'use strict';
 
