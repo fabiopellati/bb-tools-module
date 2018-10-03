@@ -280,13 +280,13 @@ module.exports = ButtonCommitEditorView;
  * specs:
  *
  */
-var BaseView = require('../FormFieldEditorView');
+var FormFieldEditorView = require('../FormFieldEditorView');
 
 /**
  * genera un button generico
  *
  */
-var ButtonEditorView = BaseView.extend({
+var ButtonEditorView = FormFieldEditorView.extend({
         tagName: 'button',
         // template: _.template('<button class="editor <%= attributes.button_class %> " ><%- label%></button>'),
         events: {
@@ -294,7 +294,7 @@ var ButtonEditorView = BaseView.extend({
         },
         label: 'label',
         initialize: function (options) {
-            BaseView.prototype.initialize.call(this, options);
+            FormFieldEditorView.prototype.initialize.call(this, options);
             if (typeof options.label != 'undefined') {
                 this.label = options.label;
             }
@@ -328,6 +328,7 @@ var ButtonEditorView = BaseView.extend({
     })
 ;
 module.exports = ButtonEditorView;
+
 },{"../FormFieldEditorView":1}],4:[function(require,module,exports){
 'use strict';
 
